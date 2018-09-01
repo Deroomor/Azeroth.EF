@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EF.Designer", "EF.Designer\EF.Designer.csproj", "{628955AE-303F-47DB-9A2B-C2431C351D44}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EF.T4.Mssql", "EF.T4.Mssql\EF.T4.Mssql.csproj", "{FF41D56A-AABB-4CE0-930C-6EBA6363892F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EF.T4.Mysql", "EF.T4.Mysql\EF.T4.Mysql.csproj", "{E8BAD131-0461-46D7-AF02-3117D92D12BA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{628955AE-303F-47DB-9A2B-C2431C351D44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{628955AE-303F-47DB-9A2B-C2431C351D44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{628955AE-303F-47DB-9A2B-C2431C351D44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{628955AE-303F-47DB-9A2B-C2431C351D44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF41D56A-AABB-4CE0-930C-6EBA6363892F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF41D56A-AABB-4CE0-930C-6EBA6363892F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF41D56A-AABB-4CE0-930C-6EBA6363892F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF41D56A-AABB-4CE0-930C-6EBA6363892F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8BAD131-0461-46D7-AF02-3117D92D12BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8BAD131-0461-46D7-AF02-3117D92D12BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8BAD131-0461-46D7-AF02-3117D92D12BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8BAD131-0461-46D7-AF02-3117D92D12BA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
