@@ -74,7 +74,6 @@ namespace EF.T4.Mysql
             this.WriteLine(string.Format("{1}public partial class {0}",tableNameTMP,new String(' ',4)));
             this.WriteLine(new String(' ',4)+"{");
             List<string> lstEnum=new List<string>();
-     
             using (var cmd = cnn.CreateCommand())
             {
                 cmd.CommandText = "select * from "+kv.Key;
@@ -132,12 +131,5 @@ namespace EF.T4.Mysql
             manager.EndBlock();
         }
     }
-			
-
-
-
-
-
-
  #>
 <# manager.Process(true); #> 
