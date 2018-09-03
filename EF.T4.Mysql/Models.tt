@@ -32,12 +32,12 @@ namespace EF.T4.Mysql
 <# manager.EndBlock(); #>
 
 <#
-	      //System.Diagnostics.Debugger.Launch();//---进入调试
+	 //System.Diagnostics.Debugger.Launch();//---进入调试
     string configPath=Host.ResolveAssemblyReference("$(ProjectDir)")+"app.config";
     var configPathMap=new System.Configuration.ExeConfigurationFileMap(){ExeConfigFilename=configPath};
     var appConfig=System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configPathMap, System.Configuration.ConfigurationUserLevel.None);
     var connSection= appConfig.GetSection("connectionStrings") as System.Configuration.ConnectionStringsSection;  
-    string[] flagEnum=new string[]{"type","enum"};
+    string[] flagEnum=new string[]{"type22","enum22"};
     string cnnstr= connSection.ConnectionStrings["EquitySaas"].ConnectionString;
     string catalog=cnnstr.Split(new char[] { ';','='},StringSplitOptions.RemoveEmptyEntries).Select(x=>x.ToLower()).SkipWhile(x=>x!= "initial catalog").ToArray()[1];
     string cmdstr=string.Format(@"select * from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' and table_schema='{0}'", catalog);
