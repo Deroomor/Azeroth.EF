@@ -19,10 +19,12 @@ using System.Linq;
 namespace EF.T4.Mysql
 {
 <#
+    string cnnstrName="EquitySaas";
+
     string nameClass= System.IO.Path.GetFileNameWithoutExtension(this.Host.TemplateFile);
     this.WriteLine(string.Format("{0}public partial class {1} : System.Data.Entity.DbContext",new String(' ',2),nameClass));
     this.WriteLine(new String(' ',2)+"{");
-    this.WriteLine(string.Format("{0}public {1}() : base(\"name=EquitySaas\")",new String(' ',8),nameClass));
+    this.WriteLine(string.Format("{0}public {1}() : base(\"name={2}\")",new String(' ',8),nameClass,cnnstrName));
  #>
         {
         }    
@@ -32,7 +34,7 @@ namespace EF.T4.Mysql
     var configPathMap=new System.Configuration.ExeConfigurationFileMap(){ExeConfigFilename=configPath};
     var appConfig=System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configPathMap, System.Configuration.ConfigurationUserLevel.None);
     var connSection= appConfig.GetSection("connectionStrings") as System.Configuration.ConnectionStringsSection;  
-    string cnnstr= connSection.ConnectionStrings["EquitySaas"].ConnectionString;
+    string cnnstr= connSection.ConnectionStrings[cnnstrName].ConnectionString;
     string catalog=cnnstr.Split(new char[] { ';','='},StringSplitOptions.RemoveEmptyEntries).Select(x=>x.ToLower()).SkipWhile(x=>x!= "initial catalog").ToArray()[1];
     string cmdstr=string.Format(@"select * from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' and table_schema='{0}'", catalog);
     Dictionary<string,string> lstTableName=new Dictionary<string,string>();
