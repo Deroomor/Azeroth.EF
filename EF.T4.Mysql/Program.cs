@@ -10,6 +10,10 @@ namespace EF.T4.Mysql
     {
         static void Main(string[] args)
         {
+            DbContext dbcontext = new DbContext();
+            var lst= dbcontext.Company_Shares.ToList();
+
+            var lst2= dbcontext.Plan.Where(x=>x.Id=="sss").ToList();
         }
     }
 }
