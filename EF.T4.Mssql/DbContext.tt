@@ -16,10 +16,10 @@ using System.Data.Entity;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
-namespace EF.T4.Mssql.ZS
+namespace EF.T4.Mssql
 {
 <#
-    string cnnstrName="GZDbContext";
+    string cnnstrName="mssqlmaster";
     //System.Diagnostics.Debugger.Launch();//---进入调试
     string nameClass= System.IO.Path.GetFileNameWithoutExtension(this.Host.TemplateFile);
     this.WriteLine(string.Format("{0}public partial class {1} : System.Data.Entity.DbContext",new String(' ',2),nameClass));
