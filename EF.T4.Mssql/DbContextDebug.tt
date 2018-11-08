@@ -1,0 +1,65 @@
+﻿<#@ template language="C#" hostspecific="True" debug="true"#>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Configuration" #>
+
+<#@ assembly name="$(SolutionDir)\packages\MySql.Data.6.9.12\lib\net45\MySql.Data.dll"  #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#@ import namespace="System.Data" #>
+<#@ output extension=".cs" #>
+using System;
+using System.Data.Entity;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+
+namespace EF.T4.Mssql
+{
+<#
+    string cnnstrName="mssqlmaster";
+    //System.Diagnostics.Debugger.Launch();//---进入调试
+    string nameClass= System.IO.Path.GetFileNameWithoutExtension(this.Host.TemplateFile);
+    this.WriteLine(string.Format("{0}public partial class {1} : System.Data.Entity.DbContext",new String(' ',2),nameClass));
+    this.WriteLine(new String(' ',2)+"{");
+    this.WriteLine(string.Format("{0}public {1}() : base(\"name={2}\")",new String(' ',8),nameClass,cnnstrName));
+ #>
+        {
+        }    
+<#
+    string configPath=Host.ResolveAssemblyReference("$(ProjectDir)")+"app.config";
+    var configPathMap=new System.Configuration.ExeConfigurationFileMap(){ExeConfigFilename=configPath};
+    var appConfig=System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configPathMap, System.Configuration.ConfigurationUserLevel.None);
+    var connSection= appConfig.GetSection("connectionStrings") as System.Configuration.ConnectionStringsSection;  
+    string cnnstr= connSection.ConnectionStrings[cnnstrName].ConnectionString;
+	using (var cnn = new System.Data.SqlClient.SqlConnection(cnnstr))
+    {
+        cnn.Open();
+        List<string> lstTableName = new List<string>();
+        using (var cmd = cnn.CreateCommand())
+        {
+            cmd.CommandText = "select TABLE_NAME from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME";
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    lstTableName.Add(reader.GetString(0));
+                }
+            }
+        }
+        foreach (string tableName in lstTableName)
+        {
+            if(!tableName.StartsWith("GZ_"))
+                continue;
+            string comment=string.Empty;
+            this.WriteLine(string.Format("{0}/// <summary>",new String(' ',4)));
+            this.WriteLine(string.Format("{0}/// {1}",new String(' ',4),comment));
+            this.WriteLine(string.Format("{0}/// <summary>",new String(' ',4)));
+            this.WriteLine(string.Format("{0}public virtual DbSet<{1}> {1} {2}",new String(' ',4),tableName,"{ get; set; }"));
+        }
+    }
+ #>
+    }
+}
