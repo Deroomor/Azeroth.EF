@@ -50,7 +50,7 @@ namespace EF.T4.Mysql
                 }
             }
         }
-        foreach (string kv in dictTableName)
+        foreach (var kv in dictTableName)
         {
             string comment=kv.Value;
             this.WriteLine(string.Format("{0}/// <summary>",new String(' ',4)));
