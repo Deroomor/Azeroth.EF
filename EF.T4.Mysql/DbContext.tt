@@ -20,7 +20,6 @@ namespace EF.T4.Mysql
 {
 <#
     string cnnstrName="EquitySaas";
-
     string nameClass= System.IO.Path.GetFileNameWithoutExtension(this.Host.TemplateFile);
     this.WriteLine(string.Format("{0}public partial class {1} : System.Data.Entity.DbContext",new String(' ',2),nameClass));
     this.WriteLine(new String(' ',2)+"{");
@@ -35,37 +34,29 @@ namespace EF.T4.Mysql
     var appConfig=System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configPathMap, System.Configuration.ConfigurationUserLevel.None);
     var connSection= appConfig.GetSection("connectionStrings") as System.Configuration.ConnectionStringsSection;  
     string cnnstr= connSection.ConnectionStrings[cnnstrName].ConnectionString;
-    string catalog=cnnstr.Split(new char[] { ';','='},StringSplitOptions.RemoveEmptyEntries).Select(x=>x.ToLower()).SkipWhile(x=>x!= "initial catalog").ToArray()[1];
-    string cmdstr=string.Format(@"select * from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' and table_schema='{0}'", catalog);
-    Dictionary<string,string> lstTableName=new Dictionary<string,string>();
-    using(var cnn=new MySql.Data.MySqlClient.MySqlConnection(cnnstr))
+	using (var cnn = new System.Data.SqlClient.SqlConnection(cnnstr))
     {
         cnn.Open();
-        var cmd2= cnn.CreateCommand();
-        cmd2.CommandText=cmdstr;
-        using(var reader=cmd2.ExecuteReader())
+        Dictionary<string,string> dictTableName=new Dictionary<string,string>();
+        using (var cmd = cnn.CreateCommand())
         {
-            while(reader.Read())
-                lstTableName.Add(reader["TABLE_NAME"].ToString(),reader["TABLE_COMMENT"].ToString());
+            string catalog=cnnstr.Split(new char[] { ';','='},StringSplitOptions.RemoveEmptyEntries).Select(x=>x.ToLower()).SkipWhile(x=>x!= "initial catalog").ToArray()[1];
+            cmd.CommandText=string.Format(@"select * from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' and table_schema='{0}'", catalog);
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    dictTableName.Add(reader["TABLE_NAME"].ToString(),reader["TABLE_COMMENT"].ToString());
+                }
+            }
         }
-        cmd2.Dispose();
-        foreach(KeyValuePair<string,string> kv in lstTableName)
-        {				
+        foreach (string kv in dictTableName)
+        {
+            string comment=kv.Value;
             this.WriteLine(string.Format("{0}/// <summary>",new String(' ',4)));
-            this.WriteLine(string.Format("{0}/// {1}",new String(' ',4),kv.Value.Replace("\r\n",string.Empty).Replace("\r",string.Empty).Replace("\n",string.Empty)));
+            this.WriteLine(string.Format("{0}/// {1}",new String(' ',4),comment));
             this.WriteLine(string.Format("{0}/// <summary>",new String(' ',4)));
-            string tmp=string.Join("_", kv.Key.Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries).Select(x => string.Concat(x.Select((a, index) => index == 0 ? char.ToUpper(a) : a))));
-            if(tmp=="Target")
-                tmp="target";
-            this.WriteLine(string.Format("{1}public virtual DbSet<{0}> {0} {2}",tmp,new String(' ',4),"{ get; set; }"));
-            //foreach(string name in lstEnum)
-            //{
-            //this.WriteLine(string.Empty);
-            //this.WriteLine(string.Format("{0}public partial enum {1}",new String(' ',8),name));
-            //this.WriteLine(new String(' ',8)+"{");
-            //this.WriteLine(new String(' ',8)+"");
-            //this.WriteLine(new String(' ',8)+"}");
-            //}
+            this.WriteLine(string.Format("{0}public virtual DbSet<{1}> {1} {2}",new String(' ',4),kv.Key,"{ get; set; }"));
         }
     }
  #>

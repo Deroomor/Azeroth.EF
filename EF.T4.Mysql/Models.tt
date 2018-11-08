@@ -14,7 +14,6 @@
 <#@ output extension=".txt" #>
 <# var manager = Manager.Create(Host, GenerationEnvironment); #>
 <# manager.StartHeader(); #>
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -26,110 +25,86 @@ namespace EF.T4.Mysql
 <# manager.EndBlock(); #>
  
 <# manager.StartFooter(); #>
-    }
 }
 <# manager.EndBlock(); #>
 
 <#
 	 //System.Diagnostics.Debugger.Launch();//---进入调试
-     string[] flagEnum=new string[]{"type22","enum22"};
      string cnnstrName="EquitySaas";
-
     string configPath=Host.ResolveAssemblyReference("$(ProjectDir)")+"app.config";
     var configPathMap=new System.Configuration.ExeConfigurationFileMap(){ExeConfigFilename=configPath};
     var appConfig=System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configPathMap, System.Configuration.ConfigurationUserLevel.None);
     var connSection= appConfig.GetSection("connectionStrings") as System.Configuration.ConnectionStringsSection;  
     string cnnstr= connSection.ConnectionStrings[cnnstrName].ConnectionString;
-    string catalog=cnnstr.Split(new char[] { ';','='},StringSplitOptions.RemoveEmptyEntries).Select(x=>x.ToLower()).SkipWhile(x=>x!= "initial catalog").ToArray()[1];
-    string cmdstr=string.Format(@"select * from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' and table_schema='{0}'", catalog);
-    Dictionary<string,string> lstTableName=new Dictionary<string,string>();
-    using(var cnn=new MySql.Data.MySqlClient.MySqlConnection(cnnstr))
+    using (var cnn = new MySql.Data.MySqlClient.MySqlConnection(cnnstr))
     {
         cnn.Open();
-        var cmd2= cnn.CreateCommand();
-        cmd2.CommandText=cmdstr;
-        using(var reader=cmd2.ExecuteReader())
+        Dictionary<string,string> dictTableName=new Dictionary<string,string>();
+        using (var cmd = cnn.CreateCommand())
         {
-            while(reader.Read())
+            string catalog=cnnstr.Split(new char[] { ';','='},StringSplitOptions.RemoveEmptyEntries).Select(x=>x.ToLower()).SkipWhile(x=>x!= "initial catalog").ToArray()[1];
+            cmd.CommandText=string.Format(@"select * from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' and table_schema='{0}'", catalog);
+            using (var reader = cmd.ExecuteReader())
             {
-                string tableName= reader["TABLE_NAME"].ToString();
-                lstTableName.Add(tableName,reader["TABLE_COMMENT"].ToString());
+                while (reader.Read())
+                {
+                    dictTableName.Add(reader["TABLE_NAME"].ToString(),reader["TABLE_COMMENT"].ToString());
+                }
             }
         }
-
-        cmd2.Dispose();
-        foreach(KeyValuePair<string,string> kv in lstTableName)
-        {		
-            string tableNameTMP=string.Join("_", kv.Key.Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries).Select(x => string.Concat(x.Select((a, index) => index == 0 ? char.ToUpper(a) : a))));
-            if(tableNameTMP=="Target")//额外处理，Target会导致模板错误，具体原因未查
-                tableNameTMP="target";
-            manager.StartNewFile(tableNameTMP+".cs");
-            //    [Table("plan")]
-            // [Column("id")]
-            string cmdstrForColDescription= string.Format(@"show full fields from {0}", kv.Key);
-            this.WriteLine(string.Format("{0}/// <summary>",new String(' ',4)));
+        foreach (var kv in dictTableName)
+        {
+            manager.StartNewFile(kv.Key + ".cs");
+           this.WriteLine(string.Format("{0}/// <summary>",new String(' ',4)));
             this.WriteLine(string.Format("{0}/// {1}",new String(' ',4),kv.Value.Replace("\r\n"," ").Replace("\r"," ").Replace("\n"," ")));
             this.WriteLine(string.Format("{0}/// <summary>",new String(' ',4)));
             this.WriteLine(string.Format("{0}[Table(\"{1}\")]",new String(' ',4),kv.Key));
-            this.WriteLine(string.Format("{1}public partial class {0}",tableNameTMP,new String(' ',4)));
-            this.WriteLine(new String(' ',4)+"{");
-            List<string> lstEnum=new List<string>();
+            this.WriteLine(string.Format("{0}public partial class {1}", new String(' ', 4),kv.Key ));
+            this.WriteLine(new String(' ', 4) + "{");
+            System.Data.DataTable schemaTable;
             using (var cmd = cnn.CreateCommand())
             {
-                cmd.CommandText = "select * from "+kv.Key;
-                var rr=cmd.ExecuteReader(System.Data.CommandBehavior.KeyInfo);
-                DataTable table = rr.GetSchemaTable();
-                rr.Close();
-                cmd.CommandText=cmdstrForColDescription;
-                using(var adapater=new MySql.Data.MySqlClient.MySqlDataAdapter(cmd))
+                cmd.CommandText = string.Format("select * from [{0}]",kv.Key);
+                using (var reader = cmd.ExecuteReader(System.Data.CommandBehavior.KeyInfo | System.Data.CommandBehavior.SchemaOnly))
                 {
-                    DataTable tableDesp=new DataTable();
-                    adapater.Fill(tableDesp);
-                    foreach (DataRow row in table.Rows)
-                    {
-                        string colName = row["ColumnName"].ToString();
-                        string colNameForComment=colName;
-                        if(colName=="params")//额外处理，c#关键字
-                            colName="Params";
-                        colName=string.Join("_", colName.Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries).Select(x => string.Concat(x.Select((a, index) => index == 0 ? char.ToUpper(a) : a))));
-                        if(flagEnum.Any(x=>colName.ToLower().EndsWith(x)))
-                            lstEnum.Add(colName+"s");
-                        string colType = row["DataType"].ToString().Substring(7);
-                        bool allowDBNull=Convert.ToBoolean(row["AllowDBNull"]);
-                        bool isKey=Convert.ToBoolean(row["IsKey"]);
-                        if(allowDBNull && !colType.Equals("String")&& !colType.Equals("Byte[]"))
-                            colType="Nullable<"+colType+">";
-                        this.WriteLine(string.Format("{3}/// <summary>",colType,colName,"{set;get;}",new String(' ',8)));
-                        this.WriteLine(string.Format("{3}///{4}",colType,colName,"{set;get;}",new String(' ',8),tableDesp.Select("Field='"+colNameForComment+"'")[0]["Comment"].ToString().Replace("\r\n"," ").Replace("\r"," ").Replace("\n"," ")));
-                        this.WriteLine(string.Format("{3}/// </summary>",colType,colName,"{set;get;}",new String(' ',8)));
-                        if(!allowDBNull && colType.Equals("String"))
-                            this.WriteLine(string.Format("{2}[Required]",row["ColumnSize"],allowDBNull.ToString().ToLower(),new String(' ',8)));
-                        if(colType.Equals("String") && ((int)row["ColumnSize"])<int.MaxValue &&((int)row["ColumnSize"])>0)
-                            this.WriteLine(string.Format("{2}[StringLength({0})]",row["ColumnSize"],allowDBNull.ToString().ToLower(),new String(' ',8)));
-                        if(isKey)
-                            this.WriteLine(string.Format("{2}[Key]",row["ColumnSize"],allowDBNull.ToString().ToLower(),new String(' ',8)));
-                        //if(allowDBNull && colType.Equals("String") &&!colName.EndsWith("Enum"))
-                        //this.WriteLine(string.Format("{2}[XString({0},{1})]",((int)row["ColumnSize"])<=0?int.MaxValue:row["ColumnSize"],allowDBNull.ToString().ToLower(),new String(' ',8)));
-                        //if(colType.Equals("String") &&colName.EndsWith("Enum"))
-                        //this.WriteLine(string.Format("{2}[XStringMapEnum]",row["ColumnSize"],allowDBNull.ToString().ToLower(),new String(' ',8)));
-                        this.WriteLine(string.Format("{0}[Column(\"{1}\")]",new String(' ',8),colNameForComment));
-                        if(flagEnum.Any(x=>colName.ToLower().EndsWith(x)))
-                            this.WriteLine(string.Format("{3}public {0} {1} {2}",lstEnum[lstEnum.Count-1],colName,"{set;get;}",new String(' ',8)));
-                        else
-                            this.WriteLine(string.Format("{3}public {0} {1} {2}",colType,colName,"{set;get;}",new String(' ',8)));
-                    }
+                    schemaTable = reader.GetSchemaTable();
                 }
             }
-            //foreach(string name in lstEnum)
-            //{
-            //this.WriteLine(string.Empty);
-            //this.WriteLine(string.Format("{0}public partial enum {1}",new String(' ',8),name));
-            //this.WriteLine(new String(' ',8)+"{");
-            //this.WriteLine(new String(' ',8)+"");
-            //this.WriteLine(new String(' ',8)+"}");
-            //}
+            System.Data.DataTable commentTable=new System.Data.DataTable();
+            using (var cmd = cnn.CreateCommand())
+            {
+                cmd.CommandText = string.Format(@"show full fields from {0}", kv.Key);
+                using (var adapter=new MySql.Data.MySqlClient.MySqlDataAdapter(cmd))
+                {
+                    adapter.Fill(commentTable);
+                }
+            }
+            foreach (System.Data.DataRow row in schemaTable.Select())
+            {
+                string colName = row["ColumnName"].ToString();
+                int columnSize = Convert.ToInt32(row["ColumnSize"]);
+                string colType = row["DataType"].ToString().Substring("System.".Length);
+                bool allowDBNull = Convert.ToBoolean(row["AllowDBNull"]);
+                bool isKey=Convert.ToBoolean(row["IsKey"]);
+                if (allowDBNull && !colType.Equals("String") && !colType.Equals("Byte[]"))
+                    colType = "Nullable<" + colType + ">";
+                if (colName.EndsWith("Enum"))
+                    colType = colName.Substring(0, colName.Length - "Enum".Length) + "Index";
+                string comment = commentTable.Select("Field='"+colName+"'")[0]["Comment"].ToString().Replace("\r\n"," ").Replace("\r"," ").Replace("\n"," ");
+                this.WriteLine(string.Format("{0}/// <summary>",new String(' ', 8)));
+                this.WriteLine(string.Format("{0}///{1}", new String(' ', 8), comment));
+                this.WriteLine(string.Format("{0}/// </summary>", new String(' ', 8)));
+                if(!allowDBNull && colType.Equals("String"))
+                    this.WriteLine(string.Format("{0}[Required]",new String(' ',8)));
+                if(colType.Equals("String") && columnSize<int.MaxValue && columnSize>0)
+                    this.WriteLine(string.Format("{0}[StringLength({1})]",new String(' ',8),columnSize));
+                if(isKey)
+                    this.WriteLine(string.Format("{0}[Key]",new String(' ',8)));    
+                this.WriteLine(string.Format("{0}public {1} {2} {3}", new String(' ', 8), colType, colName, "{set;get;}"));
+            }
+            this.WriteLine(new String(' ', 4) + "}");
             manager.EndBlock();
         }
     }
- #>
+#>
 <# manager.Process(true); #> 

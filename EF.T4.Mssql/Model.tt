@@ -55,7 +55,7 @@ namespace EF.T4.Mssql
             if(!nameClass.StartsWith("GZ_"))
                 continue;
             manager.StartNewFile(nameClass + ".cs");
-            this.WriteLine(string.Format("{1}public partial class {0}", nameClass, new String(' ', 4)));
+            this.WriteLine(string.Format("{0}public partial class {1}", new String(' ', 4), nameClass));
             this.WriteLine(new String(' ', 4) + "{");
             System.Data.DataTable schemaTable;
             using (var cmd = cnn.CreateCommand())
@@ -104,6 +104,6 @@ namespace EF.T4.Mssql
             this.WriteLine(new String(' ', 4) + "}");
             manager.EndBlock();
         }
-        }
- #>
+    }
+#>
 <# manager.Process(true); #> 
