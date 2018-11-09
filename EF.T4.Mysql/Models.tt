@@ -64,7 +64,7 @@ namespace EF.T4.Mysql
             System.Data.DataTable schemaTable;
             using (var cmd = cnn.CreateCommand())
             {
-                cmd.CommandText = string.Format("select * from [{0}]",kv.Key);
+                cmd.CommandText = string.Format("select * from {0}",kv.Key);
                 using (var reader = cmd.ExecuteReader(System.Data.CommandBehavior.KeyInfo | System.Data.CommandBehavior.SchemaOnly))
                 {
                     schemaTable = reader.GetSchemaTable();

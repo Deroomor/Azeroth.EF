@@ -34,7 +34,7 @@ namespace EF.T4.Mysql
     var appConfig=System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configPathMap, System.Configuration.ConfigurationUserLevel.None);
     var connSection= appConfig.GetSection("connectionStrings") as System.Configuration.ConnectionStringsSection;  
     string cnnstr= connSection.ConnectionStrings[cnnstrName].ConnectionString;
-	using (var cnn = new System.Data.SqlClient.SqlConnection(cnnstr))
+	using (var cnn = new MySql.Data.MySqlClient.MySqlConnection(cnnstr))
     {
         cnn.Open();
         Dictionary<string,string> dictTableName=new Dictionary<string,string>();
